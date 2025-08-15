@@ -1,0 +1,48 @@
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Python specific files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/                  # Virtual environment folder (if you use one)
+.venv/                 # Another common name for virtual env
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter Notebook specific files
+.ipynb_checkpoints/    # Ignores the folder you already have
+
+# IDE specific files
+.idea/                 # PyCharm
+.vscode/               # VS Code
+*.sublime-project
+*.sublime-workspace
+
+# Machine Learning specific (CRITICAL for ML projects)
+# Data files - usually too large for Git
+data/                  # IGNORE ALL DATA FILES inside the 'data' folder
+# If you have small, essential processed data, you can uncomment specific lines:
+# !data/processed/small_processed_data.csv
+
+# Trained Models and Scalers
+models/                # IGNORE ALL FILES inside the 'models' folder
+*.pkl                  # Catches any .pkl files just in case they're outside 'models'
+*.h5
+*.hdf5
+*.onnx
+*.pth
+*.pt
+*.tf
+*.ckpt
+
+# Log files, results, temporary outputs
+logs/
+results/
+outputs/
+temp/
+*.log
