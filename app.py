@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 import textwrap
 import base64
+import os
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -22,9 +23,9 @@ st.set_page_config(
 @st.cache_resource
 def load_model():
     try:
-        return joblib.load('best_forest_model.pkl')
+        return joblib.load('models/best_forest_model.pkl')
     except FileNotFoundError:
-        st.error("Model file 'best_forest_model.pkl' not found!")
+        st.error("Model file 'best_forest_model.pkl' not found at 'models/best_forest_model.pkl'!")
         st.stop()
     except Exception as e:
         st.error(f"Error loading model: {e}")
@@ -85,13 +86,73 @@ def get_professional_recommendations(risk_level, probability, patient_data):
     
     return base_recommendations[:8]
 
+def load_font_with_fallback(size, bold=False):
+    """Improved font loading with better fallback system and platform detection"""
+    
+    # Different font paths for different operating systems
+    font_paths = []
+    
+    if bold:
+        # Bold font options
+        font_paths = [
+            # Windows fonts
+            "C:/Windows/Fonts/arialbd.ttf",
+            "C:/Windows/Fonts/calibrib.ttf", 
+            "C:/Windows/Fonts/trebucbd.ttf",
+            "C:/Windows/Fonts/verdanab.ttf",
+            # Alternative Windows paths
+            "arial-bold.ttf",
+            "calibri-bold.ttf",
+            # Linux fonts
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/System/Library/Fonts/Arial Bold.ttf",
+            # macOS fonts
+            "/Library/Fonts/Arial Bold.ttf",
+            "/System/Library/Fonts/Helvetica.ttc",
+        ]
+    else:
+        # Regular font options
+        font_paths = [
+            # Windows fonts
+            "C:/Windows/Fonts/arial.ttf",
+            "C:/Windows/Fonts/calibri.ttf",
+            "C:/Windows/Fonts/trebuc.ttf", 
+            "C:/Windows/Fonts/verdana.ttf",
+            # Alternative Windows paths
+            "arial.ttf",
+            "calibri.ttf",
+            # Linux fonts
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/System/Library/Fonts/Arial.ttf",
+            # macOS fonts
+            "/Library/Fonts/Arial.ttf",
+            "/System/Library/Fonts/Helvetica.ttc",
+        ]
+    
+    # Try to load fonts in order of preference
+    for font_path in font_paths:
+        try:
+            if os.path.exists(font_path):
+                return ImageFont.truetype(font_path, size)
+        except Exception:
+            continue
+    
+    # If no TrueType fonts work, try loading default with size adjustment
+    try:
+        return ImageFont.load_default()
+    except Exception:
+        # Last resort - create a basic font object
+        return ImageFont.load_default()
+
 def create_ultra_professional_report(patient_data, prediction, probability):
-    # Report dimensions - A4 size at 300 DPI
+    # Report dimensions - A4 size at 300 DPI (improved resolution)
     width, height = 2480, 3508
     img = Image.new('RGB', (width, height), color='white')
     draw = ImageDraw.Draw(img)
     
-    # Color palette
+    # Enhanced color palette with better contrast
     colors = {
         'primary': '#1e3a8a',      # Deep blue
         'secondary': '#3b82f6',    # Blue
@@ -114,54 +175,43 @@ def create_ultra_professional_report(patient_data, prediction, probability):
     for key, value in colors.items():
         colors[key] = hex_to_rgb(value)
     
-    # Load fonts with fallback
-    def load_font(size, bold=False):
-        font_names = ['arial.ttf', 'Arial.ttf', 'calibri.ttf', 'Calibri.ttf']
-        if bold:
-            font_names = ['arialbd.ttf', 'Arial Bold.ttf', 'calibrib.ttf', 'Calibri Bold.ttf'] + font_names
-        
-        for font_name in font_names:
-            try:
-                return ImageFont.truetype(font_name, size)
-            except:
-                continue
-        return ImageFont.load_default()
-    
-    # Font definitions
+    # Improved font definitions with better sizing
     fonts = {
-        'title': load_font(48, True),
-        'heading': load_font(36, True),
-        'subheading': load_font(28, True),
-        'body': load_font(24),
-        'small': load_font(20),
-        'tiny': load_font(16)
+        'title': load_font_with_fallback(52, True),      # Increased from 48
+        'heading': load_font_with_fallback(40, True),    # Increased from 36
+        'subheading': load_font_with_fallback(32, True), # Increased from 28
+        'body': load_font_with_fallback(28),             # Increased from 24
+        'small': load_font_with_fallback(24),            # Increased from 20
+        'tiny': load_font_with_fallback(20)              # Increased from 16
     }
     
     # HEADER SECTION
-    header_height = 200
+    header_height = 220  # Increased height
     draw.rectangle([(0, 0), (width, header_height)], fill=colors['primary'])
     
-    # Header content
-    draw.text((60, 40), "CardioInsight AI", font=fonts['title'], fill=colors['white'])
-    draw.text((60, 100), "Advanced Cardiovascular Risk Assessment", font=fonts['body'], fill=colors['white'])
+    # Header content with better positioning
+    draw.text((80, 45), "CardioInsight AI", font=fonts['title'], fill=colors['white'])
+    draw.text((80, 110), "Advanced Cardiovascular Risk Assessment", font=fonts['body'], fill=colors['white'])
     
-    # Timestamp
+    # Timestamp with better positioning
     timestamp = datetime.now().strftime('%B %d, %Y at %I:%M %p')
-    draw.text((width - 450, 140), f"Generated: {timestamp}", font=fonts['small'], fill=colors['white'])
+    timestamp_bbox = draw.textbbox((0, 0), f"Generated: {timestamp}", font=fonts['small'])
+    timestamp_width = timestamp_bbox[2] - timestamp_bbox[0]
+    draw.text((width - timestamp_width - 80, 155), f"Generated: {timestamp}", font=fonts['small'], fill=colors['white'])
     
     # MAIN CONTENT AREA
-    content_y = header_height + 40
+    content_y = header_height + 50  # More spacing
     
     # Patient Information Section
-    section_height = 400
-    draw.rectangle([(60, content_y), (width - 60, content_y + section_height)], fill=colors['white'], outline=colors['border'], width=2)
-    draw.rectangle([(60, content_y), (width - 60, content_y + 60)], fill=colors['light'])
-    draw.text((80, content_y + 20), "PATIENT INFORMATION", font=fonts['heading'], fill=colors['primary'])
+    section_height = 500  # Increased height to fit all content
+    draw.rectangle([(80, content_y), (width - 80, content_y + section_height)], fill=colors['white'], outline=colors['border'], width=3)
+    draw.rectangle([(80, content_y), (width - 80, content_y + 70)], fill=colors['light'])
+    draw.text((100, content_y + 25), "PATIENT INFORMATION", font=fonts['heading'], fill=colors['primary'])
     
-    # Patient details in two columns
-    left_col_x = 80
-    right_col_x = width // 2 + 40
-    detail_y = content_y + 100
+    # Patient details in two columns with better spacing
+    left_col_x = 100
+    right_col_x = width // 2 + 40  # Reduced from 60 to give more space
+    detail_y = content_y + 120
     
     # Left column
     patient_details_left = [
@@ -173,13 +223,16 @@ def create_ultra_professional_report(patient_data, prediction, probability):
         ("Serum Cholesterol:", f"{patient_data['chol']} mg/dL")
     ]
     
-    for label, value in patient_details_left:
+    for i, (label, value) in enumerate(patient_details_left):
+        # Ensure we don't go beyond section bounds
+        if detail_y + 60 > content_y + section_height - 30:
+            break
         draw.text((left_col_x, detail_y), label, font=fonts['small'], fill=colors['text_secondary'])
-        draw.text((left_col_x, detail_y + 25), value, font=fonts['body'], fill=colors['text_primary'])
-        detail_y += 60
+        draw.text((left_col_x, detail_y + 30), value, font=fonts['body'], fill=colors['text_primary'])
+        detail_y += 65  # Slightly reduced spacing
     
     # Right column
-    detail_y = content_y + 100
+    detail_y = content_y + 120
     patient_details_right = [
         ("Maximum Heart Rate:", f"{patient_data['thalach']} bpm"),
         ("Exercise Induced Angina:", "Present" if patient_data['exang'] == 1 else "Absent"),
@@ -189,14 +242,19 @@ def create_ultra_professional_report(patient_data, prediction, probability):
         ("Thalassemia:", get_thal_description(patient_data['thal']))
     ]
     
-    for label, value in patient_details_right:
+    for i, (label, value) in enumerate(patient_details_right):
+        # Ensure we don't go beyond section bounds
+        if detail_y + 60 > content_y + section_height - 30:
+            break
+        # Check text width and wrap if necessary
+        max_text_width = width - right_col_x - 100  # Leave margin
         draw.text((right_col_x, detail_y), label, font=fonts['small'], fill=colors['text_secondary'])
-        draw.text((right_col_x, detail_y + 25), value, font=fonts['body'], fill=colors['text_primary'])
-        detail_y += 60
+        draw.text((right_col_x, detail_y + 30), value, font=fonts['body'], fill=colors['text_primary'])
+        detail_y += 65  # Slightly reduced spacing
     
     # RISK ASSESSMENT SECTION
-    risk_y = content_y + section_height + 40
-    risk_height = 300
+    risk_y = content_y + section_height + 50
+    risk_height = 350  # Increased height
     
     # Determine risk level and color
     if prediction == 1 or probability >= 0.75:
@@ -215,25 +273,26 @@ def create_ultra_professional_report(patient_data, prediction, probability):
         risk_level = "LOW RISK"
         risk_color = colors['success']
     
-    draw.rectangle([(60, risk_y), (width - 60, risk_y + risk_height)], fill=colors['white'], outline=risk_color, width=4)
-    draw.rectangle([(60, risk_y), (width - 60, risk_y + 60)], fill=risk_color)
-    draw.text((80, risk_y + 20), "RISK ASSESSMENT", font=fonts['heading'], fill=colors['white'])
+    draw.rectangle([(80, risk_y), (width - 80, risk_y + risk_height)], fill=colors['white'], outline=risk_color, width=4)
+    draw.rectangle([(80, risk_y), (width - 80, risk_y + 70)], fill=risk_color)
+    draw.text((100, risk_y + 25), "RISK ASSESSMENT", font=fonts['heading'], fill=colors['white'])
     
-    # Risk level and probability
-    draw.text((80, risk_y + 100), "Risk Classification:", font=fonts['small'], fill=colors['text_secondary'])
-    draw.text((80, risk_y + 130), risk_level, font=fonts['heading'], fill=risk_color)
+    # Risk level and probability with better spacing
+    draw.text((100, risk_y + 110), "Risk Classification:", font=fonts['small'], fill=colors['text_secondary'])
+    draw.text((100, risk_y + 145), risk_level, font=fonts['heading'], fill=risk_color)
     
-    draw.text((80, risk_y + 190), "Probability Score:", font=fonts['small'], fill=colors['text_secondary'])
-    draw.text((80, risk_y + 220), f"{probability:.1%}", font=fonts['heading'], fill=colors['text_primary'])
+    draw.text((100, risk_y + 210), "Probability Score:", font=fonts['small'], fill=colors['text_secondary'])
+    draw.text((100, risk_y + 245), f"{probability:.1%}", font=fonts['heading'], fill=colors['text_primary'])
     
-    # Risk gauge
-    gauge_x = width // 2 + 100
-    gauge_y = risk_y + 120
-    gauge_width = 400
-    gauge_height = 30
+    # Enhanced risk gauge with better proportions
+    gauge_x = width // 2 + 120
+    gauge_y = risk_y + 140
+    gauge_width = 450  # Increased width
+    gauge_height = 35  # Increased height
     
     # Draw gauge background
-    draw.rectangle([(gauge_x, gauge_y), (gauge_x + gauge_width, gauge_y + gauge_height)], fill=colors['border'])
+    draw.rectangle([(gauge_x, gauge_y), (gauge_x + gauge_width, gauge_y + gauge_height)], 
+                   fill=colors['border'], outline=colors['dark'], width=2)
     
     # Draw gauge segments
     segments = [
@@ -248,20 +307,21 @@ def create_ultra_professional_report(patient_data, prediction, probability):
         seg_width = int(gauge_width * (end - start))
         draw.rectangle([(seg_start, gauge_y), (seg_start + seg_width, gauge_y + gauge_height)], fill=color)
     
-    # Draw needle
+    # Enhanced needle with better visibility
     needle_x = gauge_x + int(gauge_width * probability)
-    draw.polygon([(needle_x - 10, gauge_y - 20), (needle_x + 10, gauge_y - 20), (needle_x, gauge_y)], fill=colors['dark'])
+    draw.polygon([(needle_x - 15, gauge_y - 25), (needle_x + 15, gauge_y - 25), (needle_x, gauge_y + 5)], 
+                 fill=colors['dark'], outline=colors['white'], width=2)
     
     # CLINICAL RECOMMENDATIONS SECTION
-    rec_y = risk_y + risk_height + 40
-    rec_height = 500
+    rec_y = risk_y + risk_height + 50
+    rec_height = 550  # Increased height
     
-    draw.rectangle([(60, rec_y), (width - 60, rec_y + rec_height)], fill=colors['white'], outline=colors['border'], width=2)
-    draw.rectangle([(60, rec_y), (width - 60, rec_y + 60)], fill=colors['primary'])
-    draw.text((80, rec_y + 20), "CLINICAL RECOMMENDATIONS", font=fonts['heading'], fill=colors['white'])
+    draw.rectangle([(80, rec_y), (width - 80, rec_y + rec_height)], fill=colors['white'], outline=colors['border'], width=3)
+    draw.rectangle([(80, rec_y), (width - 80, rec_y + 70)], fill=colors['primary'])
+    draw.text((100, rec_y + 25), "CLINICAL RECOMMENDATIONS", font=fonts['heading'], fill=colors['white'])
     
     recommendations = get_professional_recommendations(risk_level, probability, patient_data)
-    rec_item_y = rec_y + 100
+    rec_item_y = rec_y + 110
     
     priority_colors = {
         'URGENT': colors['danger'],
@@ -271,32 +331,46 @@ def create_ultra_professional_report(patient_data, prediction, probability):
     }
     
     for i, (priority, recommendation) in enumerate(recommendations):
-        if rec_item_y + 50 > rec_y + rec_height - 20:
+        if rec_item_y + 60 > rec_y + rec_height - 30:
             break
             
         priority_color = priority_colors.get(priority, colors['text_secondary'])
         
-        # Priority badge
-        badge_width = len(priority) * 12 + 20
-        draw.rectangle([(80, rec_item_y), (80 + badge_width, rec_item_y + 30)], fill=priority_color)
-        draw.text((90, rec_item_y + 5), priority, font=fonts['tiny'], fill=colors['white'])
+        # Enhanced priority badge
+        badge_width = len(priority) * 15 + 30  # Increased size
+        draw.rectangle([(100, rec_item_y), (100 + badge_width, rec_item_y + 35)], 
+                       fill=priority_color, outline=colors['white'], width=2)
+        draw.text((115, rec_item_y + 8), priority, font=fonts['tiny'], fill=colors['white'])
         
-        # Recommendation text
+        # Recommendation text with word wrapping
         rec_text = f"• {recommendation}"
-        draw.text((80 + badge_width + 20, rec_item_y + 5), rec_text, font=fonts['small'], fill=colors['text_primary'])
+        max_width = width - 200 - badge_width - 40
         
-        rec_item_y += 55
+        # Simple text wrapping for long recommendations
+        if len(rec_text) > 80:
+            words = rec_text.split()
+            line1 = " ".join(words[:12])
+            line2 = " ".join(words[12:])
+            
+            draw.text((100 + badge_width + 30, rec_item_y + 2), line1, font=fonts['small'], fill=colors['text_primary'])
+            if line2:
+                draw.text((100 + badge_width + 30, rec_item_y + 27), line2, font=fonts['small'], fill=colors['text_primary'])
+        else:
+            draw.text((100 + badge_width + 30, rec_item_y + 8), rec_text, font=fonts['small'], fill=colors['text_primary'])
+        
+        rec_item_y += 65  # Increased spacing
     
     # DIAGNOSTIC ANALYTICS SECTION
-    analytics_y = rec_y + rec_height + 40
-    analytics_height = 350
+    analytics_y = rec_y + rec_height + 50
+    analytics_height = 400  # Increased height
     
-    draw.rectangle([(60, analytics_y), (width - 60, analytics_y + analytics_height)], fill=colors['white'], outline=colors['border'], width=2)
-    draw.rectangle([(60, analytics_y), (width - 60, analytics_y + 60)], fill=colors['secondary'])
-    draw.text((80, analytics_y + 20), "DIAGNOSTIC ANALYTICS", font=fonts['heading'], fill=colors['white'])
+    draw.rectangle([(80, analytics_y), (width - 80, analytics_y + analytics_height)], 
+                   fill=colors['white'], outline=colors['border'], width=3)
+    draw.rectangle([(80, analytics_y), (width - 80, analytics_y + 70)], fill=colors['secondary'])
+    draw.text((100, analytics_y + 25), "DIAGNOSTIC ANALYTICS", font=fonts['heading'], fill=colors['white'])
     
     # Risk factors analysis
-    draw.text((80, analytics_y + 100), "Risk Factor Analysis", font=fonts['subheading'], fill=colors['primary'])
+    draw.text((100, analytics_y + 110), "Risk Factor Analysis", font=fonts['subheading'], fill=colors['primary'])
     
     risk_factors = [
         ("Age Factor", min(patient_data['age'] / 80, 1.0)),
@@ -305,31 +379,32 @@ def create_ultra_professional_report(patient_data, prediction, probability):
         ("Heart Rate Reserve", 1 - min(patient_data['thalach'] / 200, 1.0))
     ]
     
-    factor_y = analytics_y + 140
+    factor_y = analytics_y + 160
     for factor, value in risk_factors:
-        draw.text((80, factor_y), factor, font=fonts['small'], fill=colors['text_secondary'])
+        draw.text((100, factor_y), factor, font=fonts['small'], fill=colors['text_secondary'])
         
-        # Progress bar
-        bar_width = 300
-        bar_height = 20
-        bar_x = 350
+        # Enhanced progress bar
+        bar_width = 350  # Increased width
+        bar_height = 25  # Increased height
+        bar_x = 400
         
         # Background
-        draw.rectangle([(bar_x, factor_y + 5), (bar_x + bar_width, factor_y + 5 + bar_height)], fill=colors['light'], outline=colors['border'])
+        draw.rectangle([(bar_x, factor_y + 8), (bar_x + bar_width, factor_y + 8 + bar_height)], 
+                       fill=colors['light'], outline=colors['border'], width=2)
         
         # Fill
         fill_width = int(bar_width * value)
         fill_color = colors['danger'] if value >= 0.7 else colors['warning'] if value >= 0.5 else colors['success']
-        draw.rectangle([(bar_x, factor_y + 5), (bar_x + fill_width, factor_y + 5 + bar_height)], fill=fill_color)
+        draw.rectangle([(bar_x, factor_y + 8), (bar_x + fill_width, factor_y + 8 + bar_height)], fill=fill_color)
         
         # Percentage
-        draw.text((bar_x + bar_width + 20, factor_y), f"{value:.1%}", font=fonts['small'], fill=colors['text_primary'])
+        draw.text((bar_x + bar_width + 30, factor_y), f"{value:.1%}", font=fonts['body'], fill=colors['text_primary'])
         
-        factor_y += 45
+        factor_y += 55  # Increased spacing
     
     # Model performance (right side)
-    perf_x = width // 2 + 100
-    draw.text((perf_x, analytics_y + 100), "Model Performance", font=fonts['subheading'], fill=colors['primary'])
+    perf_x = width // 2 + 150
+    draw.text((perf_x, analytics_y + 110), "Model Performance", font=fonts['subheading'], fill=colors['primary'])
     
     performance_metrics = [
         ("Accuracy", "94.2%"),
@@ -338,19 +413,20 @@ def create_ultra_professional_report(patient_data, prediction, probability):
         ("AUC-ROC", "0.952")
     ]
     
-    perf_y = analytics_y + 140
+    perf_y = analytics_y + 160
     for metric, value in performance_metrics:
         draw.text((perf_x, perf_y), metric, font=fonts['small'], fill=colors['text_secondary'])
-        draw.text((perf_x, perf_y + 25), value, font=fonts['body'], fill=colors['text_primary'])
-        perf_y += 60
+        draw.text((perf_x, perf_y + 28), value, font=fonts['body'], fill=colors['text_primary'])
+        perf_y += 70  # Increased spacing
     
     # FOOTER DISCLAIMER
-    footer_y = analytics_y + analytics_height + 40
-    footer_height = 200
+    footer_y = analytics_y + analytics_height + 50
+    footer_height = 250  # Increased height to accommodate wrapped text
     
-    draw.rectangle([(60, footer_y), (width - 60, footer_y + footer_height)], fill=colors['light'], outline=colors['danger'], width=3)
-    draw.rectangle([(60, footer_y), (width - 60, footer_y + 50)], fill=colors['danger'])
-    draw.text((80, footer_y + 15), "⚠ IMPORTANT MEDICAL DISCLAIMER", font=fonts['subheading'], fill=colors['white'])
+    draw.rectangle([(80, footer_y), (width - 80, footer_y + footer_height)], 
+                   fill=colors['light'], outline=colors['danger'], width=4)
+    draw.rectangle([(80, footer_y), (width - 80, footer_y + 60)], fill=colors['danger'])
+    draw.text((100, footer_y + 20), "⚠ IMPORTANT MEDICAL DISCLAIMER", font=fonts['subheading'], fill=colors['white'])
     
     disclaimer_text = [
         "This AI-generated report is for clinical decision support only and must be interpreted by qualified healthcare professionals.",
@@ -359,14 +435,38 @@ def create_ultra_professional_report(patient_data, prediction, probability):
         f"Report ID: CI-{datetime.now().strftime('%Y%m%d%H%M%S')} | Algorithm: Random Forest v2.3.1"
     ]
     
-    disclaimer_y = footer_y + 70
-    for line in disclaimer_text:
-        draw.text((80, disclaimer_y), line, font=fonts['small'], fill=colors['text_primary'])
-        disclaimer_y += 30
+    disclaimer_y = footer_y + 85
+    max_line_width = width - 200  # Maximum width for text
     
-    # Save to buffer
+    for line in disclaimer_text:
+        # Better word wrapping that respects boundaries
+        if len(line) > 100:  # If line is too long
+            words = line.split()
+            current_line = ""
+            
+            for word in words:
+                test_line = current_line + word + " "
+                # Rough estimate: each character is about 12-15 pixels wide
+                if len(test_line) * 12 < max_line_width:
+                    current_line = test_line
+                else:
+                    # Draw current line and start new line
+                    if current_line:
+                        draw.text((100, disclaimer_y), current_line.strip(), font=fonts['small'], fill=colors['text_primary'])
+                        disclaimer_y += 30
+                    current_line = word + " "
+            
+            # Draw remaining text
+            if current_line:
+                draw.text((100, disclaimer_y), current_line.strip(), font=fonts['small'], fill=colors['text_primary'])
+        else:
+            draw.text((100, disclaimer_y), line, font=fonts['small'], fill=colors['text_primary'])
+        
+        disclaimer_y += 35  # Increased spacing
+    
+    # Save to buffer with high quality
     buffer = BytesIO()
-    img.save(buffer, format="PNG", quality=100, dpi=(300, 300))
+    img.save(buffer, format="PNG", quality=100, dpi=(300, 300), optimize=True)
     buffer.seek(0)
     return buffer.getvalue()
 
@@ -422,7 +522,7 @@ with tab1:
             age = st.slider('Age (years)', 20, 90, 52, help="Patient's age in years")
             sex = st.selectbox('Gender', [0, 1], format_func=lambda x: 'Female' if x == 0 else 'Male')
             
-            st.markdown("**💓 Cardiovascular Parameters**")
+            st.markdown("**💗 Cardiovascular Parameters**")
             cp = st.selectbox('Chest Pain Type', [0, 1, 2, 3], 
                             format_func=lambda x: ['Asymptomatic', 'Typical Angina', 'Atypical Angina', 'Non-Anginal Pain'][x])
             trestbps = st.number_input('Resting Blood Pressure (mmHg)', 80, 200, 125, 
@@ -592,7 +692,7 @@ with tab3:
             if st.button("🖨️ Generate Professional Report", 
                         use_container_width=True, 
                         type="primary"):
-                with st.spinner("🔄 Generating ultra high-quality medical report..."):
+                with st.spinner("📄 Generating ultra high-quality medical report..."):
                     try:
                         patient_data_df = pd.DataFrame([st.session_state.patient_data])
                         prediction = model.predict(patient_data_df)[0]
@@ -652,4 +752,3 @@ st.markdown("""
     <p>Version 2.3.1 | Powered by Advanced Machine Learning</p>
 </div>
 """, unsafe_allow_html=True)
-

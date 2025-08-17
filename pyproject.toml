@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cardioinsight-ai"
+version = "1.0.0"
+description = "A professional machine learning application for cardiovascular risk assessment"
+readme = "README.md"
+authors = [
+    {name = "Ahmed Umer Farooq", email = "ahmedumerfarooq@example.com"},
+]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Healthcare Industry",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Medical Science Apps",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "streamlit",
+    "pandas",
+    "joblib",
+    "scikit-learn",
+    "plotly",
+    "fpdf2",
+    "shap",
+    "kaleido"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov",
+    "black",
+    "flake8",
+    "mypy"
+]
+
+[project.urls]
+Homepage = "https://github.com/Ahmed-Umer-Farooq/Heart-Disease-Detection"
+"Bug Reports" = "https://github.com/Ahmed-Umer-Farooq/Heart-Disease-Detection/issues"
+"Source" = "https://github.com/Ahmed-Umer-Farooq/Heart-Disease-Detection"
+
+[project.scripts]
+cardioinsight = "app:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.pkl", "*.csv"]

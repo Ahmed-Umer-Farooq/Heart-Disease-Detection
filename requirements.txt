@@ -1,8 +1,15 @@
-streamlit
-pandas
-joblib
-scikit-learn
-plotly
-fpdf2
-shap
-kaleido
+streamlit>=1.20.0,<2.0.0
+pandas>=1.5.0,<2.0.0
+joblib>=1.2.0,<2.0.0
+scikit-learn>=1.2.0,<2.0.0
+plotly>=5.10.0,<6.0.0
+fpdf2>=2.5.0,<3.0.0
+shap>=0.41.0,<1.0.0
+kaleido>=0.2.0,<1.0.0
+
+# Development dependencies
+pytest>=7.0.0,<8.0.0
+pytest-cov>=4.0.0,<5.0.0
+black>=23.0.0,<24.0.0
+flake8>=6.0.0,<7.0.0
+mypy>=1.0.0,<2.0.0
