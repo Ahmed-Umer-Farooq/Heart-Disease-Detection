@@ -22,9 +22,10 @@ st.set_page_config(
 @st.cache_resource
 def load_model():
     try:
-        return joblib.load('best_forest_model.pkl')
+        # --- THIS IS THE LINE TO FIX ---
+        return joblib.load('models/best_forest_model.pkl') # Changed path from 'best_forest_model.pkl'
     except FileNotFoundError:
-        st.error("Model file 'best_forest_model.pkl' not found!")
+        st.error("Model file 'best_forest_model.pkl' not found at 'models/best_forest_model.pkl'!")
         st.stop()
     except Exception as e:
         st.error(f"Error loading model: {e}")
@@ -372,7 +373,7 @@ def create_ultra_professional_report(patient_data, prediction, probability):
 
 # Load model and data
 model = load_model()
-avg_data = get_population_averages()
+avg_data = get_population_averages() # This line is fine
 
 # --- Main Application ---
 st.title("❤️ Cardio-Insight AI")
@@ -652,4 +653,3 @@ st.markdown("""
     <p>Version 2.3.1 | Powered by Advanced Machine Learning</p>
 </div>
 """, unsafe_allow_html=True)
-
