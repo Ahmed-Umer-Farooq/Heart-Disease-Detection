@@ -203,14 +203,14 @@ def create_ultra_professional_report(patient_data, prediction, probability):
     content_y = header_height + 50  # More spacing
     
     # Patient Information Section
-    section_height = 450  # Increased height
+    section_height = 500  # Increased height to fit all content
     draw.rectangle([(80, content_y), (width - 80, content_y + section_height)], fill=colors['white'], outline=colors['border'], width=3)
     draw.rectangle([(80, content_y), (width - 80, content_y + 70)], fill=colors['light'])
     draw.text((100, content_y + 25), "PATIENT INFORMATION", font=fonts['heading'], fill=colors['primary'])
     
     # Patient details in two columns with better spacing
     left_col_x = 100
-    right_col_x = width // 2 + 60
+    right_col_x = width // 2 + 40  # Reduced from 60 to give more space
     detail_y = content_y + 120
     
     # Left column
@@ -223,10 +223,13 @@ def create_ultra_professional_report(patient_data, prediction, probability):
         ("Serum Cholesterol:", f"{patient_data['chol']} mg/dL")
     ]
     
-    for label, value in patient_details_left:
+    for i, (label, value) in enumerate(patient_details_left):
+        # Ensure we don't go beyond section bounds
+        if detail_y + 60 > content_y + section_height - 30:
+            break
         draw.text((left_col_x, detail_y), label, font=fonts['small'], fill=colors['text_secondary'])
         draw.text((left_col_x, detail_y + 30), value, font=fonts['body'], fill=colors['text_primary'])
-        detail_y += 70  # Increased spacing
+        detail_y += 65  # Slightly reduced spacing
     
     # Right column
     detail_y = content_y + 120
@@ -239,10 +242,15 @@ def create_ultra_professional_report(patient_data, prediction, probability):
         ("Thalassemia:", get_thal_description(patient_data['thal']))
     ]
     
-    for label, value in patient_details_right:
+    for i, (label, value) in enumerate(patient_details_right):
+        # Ensure we don't go beyond section bounds
+        if detail_y + 60 > content_y + section_height - 30:
+            break
+        # Check text width and wrap if necessary
+        max_text_width = width - right_col_x - 100  # Leave margin
         draw.text((right_col_x, detail_y), label, font=fonts['small'], fill=colors['text_secondary'])
         draw.text((right_col_x, detail_y + 30), value, font=fonts['body'], fill=colors['text_primary'])
-        detail_y += 70  # Increased spacing
+        detail_y += 65  # Slightly reduced spacing
     
     # RISK ASSESSMENT SECTION
     risk_y = content_y + section_height + 50
@@ -413,7 +421,7 @@ def create_ultra_professional_report(patient_data, prediction, probability):
     
     # FOOTER DISCLAIMER
     footer_y = analytics_y + analytics_height + 50
-    footer_height = 220  # Increased height
+    footer_height = 250  # Increased height to accommodate wrapped text
     
     draw.rectangle([(80, footer_y), (width - 80, footer_y + footer_height)], 
                    fill=colors['light'], outline=colors['danger'], width=4)
@@ -428,19 +436,32 @@ def create_ultra_professional_report(patient_data, prediction, probability):
     ]
     
     disclaimer_y = footer_y + 85
+    max_line_width = width - 200  # Maximum width for text
+    
     for line in disclaimer_text:
-        # Simple word wrapping for long disclaimer lines
-        if len(line) > 120:
+        # Better word wrapping that respects boundaries
+        if len(line) > 100:  # If line is too long
             words = line.split()
-            mid_point = len(words) // 2
-            line1 = " ".join(words[:mid_point])
-            line2 = " ".join(words[mid_point:])
+            current_line = ""
             
-            draw.text((100, disclaimer_y), line1, font=fonts['small'], fill=colors['text_primary'])
-            disclaimer_y += 28
-            draw.text((100, disclaimer_y), line2, font=fonts['small'], fill=colors['text_primary'])
+            for word in words:
+                test_line = current_line + word + " "
+                # Rough estimate: each character is about 12-15 pixels wide
+                if len(test_line) * 12 < max_line_width:
+                    current_line = test_line
+                else:
+                    # Draw current line and start new line
+                    if current_line:
+                        draw.text((100, disclaimer_y), current_line.strip(), font=fonts['small'], fill=colors['text_primary'])
+                        disclaimer_y += 30
+                    current_line = word + " "
+            
+            # Draw remaining text
+            if current_line:
+                draw.text((100, disclaimer_y), current_line.strip(), font=fonts['small'], fill=colors['text_primary'])
         else:
             draw.text((100, disclaimer_y), line, font=fonts['small'], fill=colors['text_primary'])
+        
         disclaimer_y += 35  # Increased spacing
     
     # Save to buffer with high quality
